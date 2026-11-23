@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install deps
+        run: pip install openpyxl python-docx
+
+      - name: Syntax check
+        run: python -m py_compile scripts/*.py
+
+      - name: End-to-end smoke test
+        run: |
+          if [ -f tests/test_pipeline.py ]; then
+            python tests/test_pipeline.py
+          else
+            echo "tests/test_pipeline.py 尚未上传，跳过冒烟测试"
+          fi
